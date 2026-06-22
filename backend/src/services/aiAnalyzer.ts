@@ -26,6 +26,8 @@ Analyze this resume for ATS compatibility and job fit.
 
 Return ONLY valid JSON.
 
+Required JSON structure:
+
 {
 "overallScore": 0,
 "atsScore": 0,
@@ -62,20 +64,24 @@ const response = await ai.models.generateContent({
   contents: prompt
 });
 
-const text = (response.text || "")
-  .replace(/^```json/, "")
-  .replace(/^```/, "")
-  .replace(/```$/, "")
+const rawText = response.text ?? "";
+
+const cleanedText = rawText
+  .replace(/^```json\s*/i, "")
+  .replace(/^```\s*/i, "")
+  .replace(/\s*```$/i, "")
   .trim();
 
+const result = JSON.parse(cleanedText);
+
 return {
-  ...(JSON.parse(text) as AnalysisResult),
+  ...(result as AnalysisResult),
   mode: "ai"
 };
 ````
 
 } catch (error) {
-console.error("Gemini failed, using heuristic mode", error);
+console.error("Gemini failed. Falling back to heuristic mode.", error);
 
 ```
 return {
