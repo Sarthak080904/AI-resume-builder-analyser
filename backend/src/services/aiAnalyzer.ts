@@ -22,9 +22,16 @@ mode: "heuristic",
 }
 
 const prompt = `
-
-
 Analyze this resume for ATS compatibility and job fit.
+
+IMPORTANT:
+
+* Return ONLY valid JSON.
+* Do not include explanations.
+* Do not include markdown.
+* Do not include code blocks.
+* Do not write "Here's the analysis".
+* Output must start with { and end with }.
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -32,6 +39,7 @@ ${jobDescription}
 RESUME:
 ${resumeText}
 `;
+
 
 const response = await ai.models.generateContent({
   model: env.geminiModel,
@@ -46,11 +54,17 @@ const cleanedText = rawText
   .replace(/\s*```$/i, "")
   .trim();
 
-const result = JSON.parse(cleanedText);
+const jsonMatch = cleanedText.match(/{[\s\S]*}/);
+
+if (!jsonMatch) {
+throw new Error("No JSON found in Gemini response");
+}
+
+const result = JSON.parse(jsonMatch[0]);
 
 return {
-  ...(result as AnalysisResult),
-  mode: "ai",
+...(result as AnalysisResult),
+mode: "ai",
 };
 
 } catch (error) {
