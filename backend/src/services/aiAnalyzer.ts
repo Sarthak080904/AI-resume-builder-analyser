@@ -5,7 +5,7 @@ import { heuristicAnalyze } from "./heuristicAnalyzer.js";
 
 const ai = env.geminiApiKey
 ? new GoogleGenAI({
-apiKey: env.geminiApiKey
+apiKey: env.geminiApiKey,
 })
 : null;
 
@@ -16,7 +16,7 @@ jobDescription: string
 if (!ai) {
 return {
 ...heuristicAnalyze(resumeText, jobDescription),
-mode: "heuristic"
+mode: "heuristic",
 };
 }
 
@@ -26,31 +26,6 @@ Analyze this resume for ATS compatibility and job fit.
 
 Return ONLY valid JSON.
 
-Required JSON structure:
-
-{
-"overallScore": 0,
-"atsScore": 0,
-"roleFitScore": 0,
-"clarityScore": 0,
-"impactScore": 0,
-"summary": "",
-"strengths": [],
-"gaps": [],
-"missingKeywords": [],
-"matchedKeywords": [],
-"improvementPlan": [],
-"rewrittenSummary": "",
-"bulletRewrites": [],
-"atsWarnings": [],
-"recommendedSkills": [],
-"sectionScores": {},
-"bulletDiagnostics": [],
-"applyReadyChecklist": [],
-"topFiveActions": [],
-"keywordCoverage": {}
-}
-
 JOB DESCRIPTION:
 ${jobDescription}
 
@@ -58,10 +33,9 @@ RESUME:
 ${resumeText}
 `;
 
-````
 const response = await ai.models.generateContent({
   model: env.geminiModel,
-  contents: prompt
+  contents: prompt,
 });
 
 const rawText = response.text ?? "";
@@ -76,19 +50,12 @@ const result = JSON.parse(cleanedText);
 
 return {
   ...(result as AnalysisResult),
-  mode: "ai"
+  mode: "ai",
 };
-````
 
 } catch (error) {
 console.error("Gemini failed. Falling back to heuristic mode.", error);
 
-```
-return {
-  ...heuristicAnalyze(resumeText, jobDescription),
-  mode: "heuristic"
-};
-```
 
 }
 }
