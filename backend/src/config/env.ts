@@ -7,5 +7,6 @@ export const env = {
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
   mongodbUri: process.env.MONGODB_URI || "",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || "",
-  anthropicModel: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6"
+  anthropicModel:
+    process.env.ANTHROPIC_MODEL || "claude-sonnet-4-20250514"
 };
