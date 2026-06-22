@@ -21,9 +21,8 @@ mode: "heuristic",
 };
 }
 
-```
 const prompt = `
-```
+
 
 Analyze this resume for ATS compatibility and job fit.
 
@@ -34,7 +33,6 @@ RESUME:
 ${resumeText}
 `;
 
-````
 const response = await ai.models.generateContent({
   model: env.geminiModel,
   contents: prompt,
@@ -54,17 +52,15 @@ return {
   ...(result as AnalysisResult),
   mode: "ai",
 };
-````
 
 } catch (error) {
 console.error("Gemini failed:", error);
 
-```
+
 return {
   ...heuristicAnalyze(resumeText, jobDescription),
   mode: "heuristic",
 };
-```
 
 }
 }
