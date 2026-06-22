@@ -13,6 +13,7 @@ export async function analyzeResume(
 resumeText: string,
 jobDescription: string
 ): Promise<AnalysisResult & { mode: "ai" | "heuristic" }> {
+try {
 if (!ai) {
 return {
 ...heuristicAnalyze(resumeText, jobDescription),
@@ -20,11 +21,9 @@ mode: "heuristic",
 };
 }
 
-try {
 const prompt = `
-Analyze this resume for ATS compatibility and job fit.
 
-Return ONLY valid JSON.
+Analyze this resume for ATS compatibility and job fit.
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -38,7 +37,7 @@ const response = await ai.models.generateContent({
   contents: prompt,
 });
 
-const rawText = response.text ?? "";
+const rawText = response.text ?? "{}";
 
 const cleanedText = rawText
   .replace(/^```json\s*/i, "")
@@ -54,8 +53,7 @@ return {
 };
 
 } catch (error) {
-console.error("Gemini failed. Falling back to heuristic mode.", error);
-
+console.error("Gemini failed:", error);
 
 }
 }
