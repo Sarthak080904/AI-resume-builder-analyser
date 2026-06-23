@@ -46,6 +46,10 @@ const response = await ai.models.generateContent({
   contents: prompt,
 });
 
+console.log("========== GEMINI RESPONSE ==========");
+console.log(response.text);
+console.log("====================================");
+  
 const rawText = response.text ?? "{}";
 
 const cleanedText = rawText
