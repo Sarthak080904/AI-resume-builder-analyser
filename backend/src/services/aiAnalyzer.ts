@@ -97,20 +97,21 @@ throw new Error("No JSON found in Gemini response");
 }
 
 try {
-  const result = JSON.parse(jsonMatch[0]);
+const result = JSON.parse(jsonMatch[0]);
 
-  return {
-    ...(result as AnalysisResult),
-    mode: "ai",
-  };
+return {
+...(result as AnalysisResult),
+mode: "ai",
+};
 } catch (parseError) {
-  console.error("JSON Parse Failed:", parseError);
+console.error("JSON Parse Failed:", parseError);
 
-  return {
-    ...heuristicAnalyze(resumeText, jobDescription),
-    mode: "heuristic",
-  };
+return {
+...heuristicAnalyze(resumeText, jobDescription),
+mode: "heuristic",
+};
 }
+
 
 return {
 ...(result as AnalysisResult),
