@@ -22,16 +22,48 @@ mode: "heuristic",
 }
 
 const prompt = `
-Analyze this resume for ATS compatibility and job fit.
+You are an ATS Resume Analyzer.
 
-IMPORTANT:
+Analyze the resume against the job description.
 
-* Return ONLY valid JSON.
-* Do not include explanations.
-* Do not include markdown.
-* Do not include code blocks.
-* Do not write "Here's the analysis".
-* Output must start with { and end with }.
+IMPORTANT RULES:
+
+1. Return ONLY valid JSON.
+2. Do NOT include markdown.
+3. Do NOT include code blocks.
+4. Do NOT include explanations.
+5. Do NOT write "Here's the analysis".
+6. Do NOT write comments inside JSON.
+7. Use double quotes for all strings.
+8. Do NOT use trailing commas.
+9. Output must start with { and end with }.
+10. Every array item must be a plain string.
+11. If information is unavailable, return an empty array [] or empty string "".
+
+Return EXACTLY this structure:
+
+{
+"overallScore": 0,
+"atsScore": 0,
+"roleFitScore": 0,
+"clarityScore": 0,
+"impactScore": 0,
+"summary": "",
+"strengths": [],
+"gaps": [],
+"missingKeywords": [],
+"matchedKeywords": [],
+"improvementPlan": [],
+"rewrittenSummary": "",
+"bulletRewrites": [],
+"atsWarnings": [],
+"recommendedSkills": [],
+"sectionScores": {},
+"bulletDiagnostics": [],
+"applyReadyChecklist": [],
+"topFiveActions": [],
+"keywordCoverage": {}
+}
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -64,7 +96,21 @@ if (!jsonMatch) {
 throw new Error("No JSON found in Gemini response");
 }
 
-const result = JSON.parse(jsonMatch[0]);
+try {
+  const result = JSON.parse(jsonMatch[0]);
+
+  return {
+    ...(result as AnalysisResult),
+    mode: "ai",
+  };
+} catch (parseError) {
+  console.error("JSON Parse Failed:", parseError);
+
+  return {
+    ...heuristicAnalyze(resumeText, jobDescription),
+    mode: "heuristic",
+  };
+}
 
 return {
 ...(result as AnalysisResult),
