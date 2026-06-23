@@ -1,4 +1,3 @@
-app.tsx
 import { Brain, FileCheck2, PencilRuler } from "lucide-react";
 import { useState } from "react";
 import { analyzeResume } from "./api";
