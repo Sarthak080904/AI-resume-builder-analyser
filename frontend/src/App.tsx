@@ -107,3 +107,55 @@ export default function App() {
     </main>
   );
 }
+
+<footer
+  style={{
+    marginTop: "40px",
+    padding: "20px",
+    borderTop: "1px solid #e5e7eb",
+    textAlign: "center",
+    fontSize: "14px"
+  }}
+>
+  <p>
+    Created by <strong>Sarthak Bharat Bhujbal</strong>
+  </p>
+
+  <p>
+    Email:{" "}
+    <a href="mailto:sarthakbhujbal7305@gmail.com">
+      sarthakbhujbal7305@gmail.com
+    </a>
+  </p>
+
+  <p>
+    GitHub:{" "}
+    <a
+      href="https://github.com/Sarthak080904/AI-resume-builder-analyser"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      View Source Code
+    </a>
+  </p>
+
+  <p>
+    <a
+      href="https://digitalheroesco.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: "inline-block",
+        padding: "10px 16px",
+        background: "#0f766e",
+        color: "white",
+        textDecoration: "none",
+        borderRadius: "8px",
+        fontWeight: "bold"
+      }}
+    >
+      Built for Digital Heroes
+    </a>
+  </p>
+</footer>
+
