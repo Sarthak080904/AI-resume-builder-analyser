@@ -21,7 +21,9 @@ mode: "heuristic",
 };
 }
 
+
 const prompt = `
+
 You are an ATS Resume Analyzer.
 
 Analyze the resume against the job description.
@@ -72,7 +74,6 @@ RESUME:
 ${resumeText}
 `;
 
-
 const response = await ai.models.generateContent({
   model: env.geminiModel,
   contents: prompt,
@@ -81,7 +82,7 @@ const response = await ai.models.generateContent({
 console.log("========== GEMINI RESPONSE ==========");
 console.log(response.text);
 console.log("====================================");
-  
+
 const rawText = response.text ?? "{}";
 
 const cleanedText = rawText
@@ -90,37 +91,30 @@ const cleanedText = rawText
   .replace(/\s*```$/i, "")
   .trim();
 
-const jsonMatch = cleanedText.match(/{[\s\S]*}/);
+const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
 
 if (!jsonMatch) {
-throw new Error("No JSON found in Gemini response");
+  throw new Error("No JSON found in Gemini response");
 }
 
 try {
-const result = JSON.parse(jsonMatch[0]);
+  const result = JSON.parse(jsonMatch[0]);
 
-return {
-...(result as AnalysisResult),
-mode: "ai",
-};
+  return {
+    ...(result as AnalysisResult),
+    mode: "ai",
+  };
 } catch (parseError) {
-console.error("JSON Parse Failed:", parseError);
+  console.error("JSON Parse Failed:", parseError);
 
-return {
-...heuristicAnalyze(resumeText, jobDescription),
-mode: "heuristic",
-};
+  return {
+    ...heuristicAnalyze(resumeText, jobDescription),
+    mode: "heuristic",
+  };
 }
-
-
-return {
-...(result as AnalysisResult),
-mode: "ai",
-};
 
 } catch (error) {
 console.error("Gemini failed:", error);
-
 
 return {
   ...heuristicAnalyze(resumeText, jobDescription),
