@@ -49,41 +49,10 @@ export default function App() {
   };
 
   return (
+  <>
     <main className="min-h-screen bg-paper">
-      <header className="border-b border-line bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-md bg-accent text-white">
-              <Brain className="h-6 w-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-ink">AI Resume Analyser and Builder</h1>
-              <p className="text-sm text-muted">ATS-focused analysis, targeted rewrites, and clean PDF export.</p>
-            </div>
-          </div>
-          <div className="inline-flex rounded-md border border-line bg-paper p-1">
-            <button
-              type="button"
-              onClick={() => setActiveTab("analyze")}
-              className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-bold ${
-                activeTab === "analyze" ? "bg-white text-accent shadow-sm" : "text-muted"
-              }`}
-            >
-              <FileCheck2 className="h-4 w-4" />
-              Analyse
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("build")}
-              className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-bold ${
-                activeTab === "build" ? "bg-white text-accent shadow-sm" : "text-muted"
-              }`}
-            >
-              <PencilRuler className="h-4 w-4" />
-              Build
-            </button>
-          </div>
-        </div>
+      <header>
+        ...
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
@@ -105,57 +74,57 @@ export default function App() {
         )}
       </div>
     </main>
-  );
-}
 
-<footer
-  style={{
-    marginTop: "40px",
-    padding: "20px",
-    borderTop: "1px solid #e5e7eb",
-    textAlign: "center",
-    fontSize: "14px"
-  }}
->
-  <p>
-    Created by <strong>Sarthak Bharat Bhujbal</strong>
-  </p>
-
-  <p>
-    Email:{" "}
-    <a href="mailto:sarthakbhujbal7305@gmail.com">
-      sarthakbhujbal7305@gmail.com
-    </a>
-  </p>
-
-  <p>
-    GitHub:{" "}
-    <a
-      href="https://github.com/Sarthak080904/AI-resume-builder-analyser"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      View Source Code
-    </a>
-  </p>
-
-  <p>
-    <a
-      href="https://digitalheroesco.com"
-      target="_blank"
-      rel="noopener noreferrer"
+    <footer
       style={{
-        display: "inline-block",
-        padding: "10px 16px",
-        background: "#0f766e",
-        color: "white",
-        textDecoration: "none",
-        borderRadius: "8px",
-        fontWeight: "bold"
+        marginTop: "40px",
+        padding: "20px",
+        borderTop: "1px solid #e5e7eb",
+        textAlign: "center",
+        fontSize: "14px",
+        background: "white"
       }}
     >
-      Built for Digital Heroes
-    </a>
-  </p>
-</footer>
+      <p>
+        Created by <strong>Sarthak Bharat Bhujbal</strong>
+      </p>
 
+      <p>
+        Email:{" "}
+        <a href="mailto:sarthakbhujbal7305@gmail.com">
+          sarthakbhujbal7305@gmail.com
+        </a>
+      </p>
+
+      <p>
+        GitHub:{" "}
+        <a
+          href="https://github.com/Sarthak080904/AI-resume-builder-analyser"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View Source Code
+        </a>
+      </p>
+
+      <p>
+        <a
+          href="https://digitalheroesco.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            background: "#0f766e",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "8px",
+            fontWeight: "bold"
+          }}
+        >
+          Built for Digital Heroes
+        </a>
+      </p>
+    </footer>
+  </>
+);
