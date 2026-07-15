@@ -1,6 +1,6 @@
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ResumeData } from "../types";
-import { formatResumeLinks, lines } from "../utils/resume";
+import { formatResumeLinks, lines, visibleEducation, visibleExperience, visibleProjects } from "../utils/resume";
 
 export type ResumeTemplate = "classic" | "compact" | "developer";
 
@@ -148,7 +148,7 @@ export default function ResumePdf({
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Experience</Text>
-          {resume.experience.map((item) => (
+          {visibleExperience(resume).map((item) => (
             <View style={styles.row} key={`${item.company}-${item.role}`}>
               <View style={styles.rowTop}>
                 <Text style={[styles.bold, styles.rowTitle]}>
@@ -166,7 +166,7 @@ export default function ResumePdf({
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Projects</Text>
-          {resume.projects.map((item) => (
+          {visibleProjects(resume).map((item) => (
             <View style={styles.row} key={item.name}>
               <Text style={styles.bold}>
                 {item.name} {item.tech ? `| ${item.tech}` : ""}
@@ -178,7 +178,7 @@ export default function ResumePdf({
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Education</Text>
-          {resume.education.map((item) => (
+          {visibleEducation(resume).map((item) => (
             <View style={styles.rowTop} key={`${item.school}-${item.degree}`}>
               <Text style={styles.rowTitle}>
                 <Text style={styles.bold}>{item.degree}</Text>, {item.school}
