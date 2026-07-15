@@ -2,6 +2,8 @@ import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ResumeData } from "../types";
 import { formatResumeLinks, lines } from "../utils/resume";
 
+export type ResumeTemplate = "classic" | "compact" | "developer";
+
 const styles = StyleSheet.create({
   page: {
     padding: 36,
@@ -10,11 +12,21 @@ const styles = StyleSheet.create({
     color: "#172026",
     lineHeight: 1.35
   },
+  compactPage: {
+    padding: 30,
+    fontSize: 9
+  },
+  developerPage: {
+    padding: 34
+  },
   name: {
     fontSize: 22,
     fontFamily: "Helvetica-Bold",
     lineHeight: 1.15,
     marginBottom: 3
+  },
+  developerName: {
+    color: "#166f73"
   },
   headline: {
     fontSize: 11,
@@ -46,6 +58,10 @@ const styles = StyleSheet.create({
   },
   row: {
     marginBottom: 7
+  },
+  developerSectionTitle: {
+    color: "#166f73",
+    borderBottomColor: "#166f73"
   },
   rowTop: {
     flexDirection: "row",
@@ -92,7 +108,13 @@ function BulletList({ value }: { value: string }) {
   );
 }
 
-export default function ResumePdf({ resume }: { resume: ResumeData }) {
+export default function ResumePdf({
+  resume,
+  template = "classic"
+}: {
+  resume: ResumeData;
+  template?: ResumeTemplate;
+}) {
   const contactItems = [
     resume.email,
     resume.phone,
@@ -102,23 +124,30 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
 
   return (
     <Document title={`${resume.fullName} Resume`}>
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.name}>{resume.fullName}</Text>
+      <Page
+        size="A4"
+        style={[
+          styles.page,
+          template === "compact" ? styles.compactPage : {},
+          template === "developer" ? styles.developerPage : {}
+        ]}
+      >
+        <Text style={[styles.name, template === "developer" ? styles.developerName : {}]}>{resume.fullName}</Text>
         <Text style={styles.headline}>{resume.headline}</Text>
         <Text style={styles.contact}>{contactItems.join(" | ")}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Summary</Text>
+          <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Summary</Text>
           <Text style={styles.paragraph}>{resume.summary}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Skills</Text>
+          <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Skills</Text>
           <Text style={styles.paragraph}>{resume.skills}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Experience</Text>
+          <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Experience</Text>
           {resume.experience.map((item) => (
             <View style={styles.row} key={`${item.company}-${item.role}`}>
               <View style={styles.rowTop}>
@@ -136,7 +165,7 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Projects</Text>
+          <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Projects</Text>
           {resume.projects.map((item) => (
             <View style={styles.row} key={item.name}>
               <Text style={styles.bold}>
@@ -148,7 +177,7 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Education</Text>
+          <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Education</Text>
           {resume.education.map((item) => (
             <View style={styles.rowTop} key={`${item.school}-${item.degree}`}>
               <Text style={styles.rowTitle}>
@@ -161,7 +190,7 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
 
         {resume.certifications ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Certifications</Text>
+            <Text style={[styles.sectionTitle, template === "developer" ? styles.developerSectionTitle : {}]}>Certifications</Text>
             <Text style={styles.paragraph}>{resume.certifications}</Text>
           </View>
         ) : null}

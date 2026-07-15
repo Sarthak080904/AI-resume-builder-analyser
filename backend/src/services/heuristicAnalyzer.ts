@@ -121,6 +121,27 @@ export function heuristicAnalyze(resumeText: string, jobDescription: string): An
     .filter((item) => !item.found)
     .map((item) => item.keyword)
     .slice(0, 16);
+  const categories: KeywordMatch["category"][] = ["technical", "soft", "domain", "tools", "certification"];
+  const keywordCoverage = categories.reduce(
+    (coverage, category) => {
+      const byCategory = matchedKeywords.filter((item) => item.category === category);
+      coverage[category] = {
+        matched: byCategory.filter((item) => item.found).length,
+        total: byCategory.length
+      };
+      return coverage;
+    },
+    {} as AnalysisResult["keywordCoverage"]
+  );
+  const extractedBullets = resumeText
+    .split(/\n|•/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 45)
+    .slice(0, 3);
+  const hasStandardSections = ["summary", "skills", "experience", "education"].every((section) =>
+    resume.includes(section)
+  );
+  const hasMetrics = /\b\d+(\.\d+)?%?|\$\d+|\b\d+\+\b/.test(resumeText);
 
   return {
     overallScore,
@@ -167,6 +188,62 @@ export function heuristicAnalyze(resumeText: string, jobDescription: string): An
       "Do not rely on icons, graphics, or visual skill meters to communicate important information.",
       "Mirror exact job-title and tool keywords when they accurately describe your background."
     ],
-    recommendedSkills: missingKeywords.slice(0, 10)
+    recommendedSkills: missingKeywords.slice(0, 10),
+    sectionScores: {
+      summary: resume.includes("summary") ? 80 : 45,
+      skills: resume.includes("skills") ? 82 : 45,
+      experience: resume.includes("experience") ? 78 : 50,
+      projects: resume.includes("project") ? 75 : 45,
+      education: resume.includes("education") ? 75 : 50
+    },
+    bulletDiagnostics: extractedBullets.map((original) => ({
+      original,
+      issue: /\d/.test(original)
+        ? "Good start. Make the scope and business result even clearer."
+        : "This bullet would be stronger with a metric, scale, or concrete result.",
+      rewrite: `${original.replace(/[.!]?$/, "")}, improving a measurable team or product outcome.`
+    })),
+    applyReadyChecklist: [
+      {
+        label: "Standard section headings",
+        passed: hasStandardSections,
+        guidance: "Use Summary, Skills, Experience, Projects, Education, and Certifications."
+      },
+      {
+        label: "Job keywords in context",
+        passed: keywordScore >= 65,
+        guidance: "Place missing keywords in truthful bullets, not only in the skills list."
+      },
+      {
+        label: "Measurable impact",
+        passed: hasMetrics,
+        guidance: "Add numbers such as percentage improvement, volume, time saved, or users served."
+      },
+      {
+        label: "ATS-safe formatting",
+        passed: true,
+        guidance: "Use a single-column resume with readable fonts and no tables, photos, or icons."
+      }
+    ],
+    topFiveActions: [
+      missingKeywords.length
+        ? `Add these priority keywords where truthful: ${missingKeywords.slice(0, 5).join(", ")}.`
+        : "Keyword coverage is healthy; focus on stronger proof and role-specific context.",
+      "Rewrite weak bullets with action + tool/process + result.",
+      "Put the target role or closest truthful role in the headline.",
+      "Keep the final export simple: standard headings, no graphics, no columns.",
+      "Proofread exact tool names, capitalization, and spelling before applying."
+    ],
+    keywordCoverage,
+    keywordRecommendations: matchedKeywords
+      .filter((item) => !item.found)
+      .slice(0, 10)
+      .map((item, index) => ({
+        keyword: item.keyword,
+        category: item.category,
+        priority: index < 4 ? "high" : index < 8 ? "medium" : "low",
+        suggestedSection: item.category === "tools" || item.category === "technical" ? "skills" : "experience",
+        guidance: `Add "${item.keyword}" only if it truthfully describes your background, ideally inside a concrete bullet.`
+      }))
   };
 }

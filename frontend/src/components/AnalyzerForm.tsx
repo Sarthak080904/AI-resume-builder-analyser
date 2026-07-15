@@ -5,8 +5,10 @@ type Props = {
   jobDescription: string;
   loading: boolean;
   error: string;
+  storeAnalysis: boolean;
   onFileChange: (file: File | null) => void;
   onJobDescriptionChange: (value: string) => void;
+  onStoreAnalysisChange: (value: boolean) => void;
   onSubmit: () => void;
 };
 
@@ -15,8 +17,10 @@ export default function AnalyzerForm({
   jobDescription,
   loading,
   error,
+  storeAnalysis,
   onFileChange,
   onJobDescriptionChange,
+  onStoreAnalysisChange,
   onSubmit
 }: Props) {
   return (
@@ -56,6 +60,21 @@ export default function AnalyzerForm({
       </div>
 
       {error ? <p className="mt-3 rounded-md bg-coral/10 p-3 text-sm font-semibold text-coral">{error}</p> : null}
+
+      <label className="mt-4 flex items-start gap-3 rounded-md border border-line bg-paper p-3 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1"
+          checked={storeAnalysis}
+          onChange={(event) => onStoreAnalysisChange(event.target.checked)}
+        />
+        <span>
+          <span className="font-bold text-ink">Save this analysis if database storage is enabled.</span>
+          <span className="mt-1 block text-xs leading-5 text-muted">
+            Off by default for privacy. Uploaded resume text is otherwise used only for this request.
+          </span>
+        </span>
+      </label>
 
       <button
         type="button"
