@@ -39,18 +39,66 @@ function cleanJson(rawText: string) {
 
 function toLines(text: string, limit = 4) {
   return text
-    .split(/\n|•|-/)
-    .map((line) => line.trim())
+    .split(/\n|\u2022/)
+    .map((line) => line.trim().replace(/^([*-]|\d+[.)])\s*/, "").trim())
     .filter(Boolean)
     .slice(0, limit);
 }
 
-function fallbackFromText(resumeText: string, jobDescription = ""): ResumeAssistantResult {
-  const lines = resumeText
+function sectionText(text: string, heading: string) {
+  const pattern = new RegExp(
+    `${heading}\\s*[:\\-]?\\s*([\\s\\S]*?)(?=\\n\\s*(summary|skills|experience|projects|certifications|achievements|internship|work experience|technical skills)\\s*[:\\-]?\\s*\\n|$)`,
+    "i"
+  );
+  return text.match(pattern)?.[1]?.trim() || "";
+}
+
+function parseEducation(resumeText: string): ResumeData["education"] {
+  const educationText = sectionText(resumeText, "education");
+  const source = educationText || resumeText;
+  const sourceLines = source
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const name = lines[0] || "Your Name";
+  const compact = sourceLines.join(" ");
+  const degreeLine = sourceLines.find((line) =>
+    /\b(B\.?\s?Tech|Bachelor(?:'s)?|BCA|B\.?\s?Sc|MCA|M\.?\s?Tech|M\.?\s?Sc|Diploma)\b/i.test(line)
+  );
+  const schoolLine = sourceLines.find((line) =>
+    /\b(University|College|Institute|School|Vidyalaya|Academy)\b/i.test(line)
+  );
+  const degreeMatch = degreeLine?.match(
+    /\b((?:B\.?\s?Tech|Bachelor(?:'s)?|BCA|B\.?\s?Sc|MCA|M\.?\s?Tech|M\.?\s?Sc|Diploma)[^|;\n]*)/i
+  );
+  const yearMatch = compact.match(/\b(20\d{2}|19\d{2})(?:\s*[-–]\s*(20\d{2}|present))?\b/i);
+  const scoreMatch = compact.match(
+    /\b((?:CGPA|GPA)\s*[:\-]?\s*\d+(?:\.\d+)?|\d+(?:\.\d+)?\s*(?:CGPA|GPA)|\d{2,3}(?:\.\d+)?%)\b/i
+  );
+
+  if (!degreeMatch && !schoolLine && !yearMatch && !scoreMatch) {
+    return [];
+  }
+
+  return [
+    {
+      degree: degreeMatch?.[1]?.trim() || "",
+      school: schoolLine?.trim() || "",
+      year: yearMatch ? [yearMatch[1], yearMatch[2]].filter(Boolean).join(" - ") : "",
+      score: scoreMatch?.[1]?.trim() || ""
+    }
+  ];
+}
+
+function normalizeBullets(value: string) {
+  return toLines(value, 20).join("\n");
+}
+
+function fallbackFromText(resumeText: string, jobDescription = ""): ResumeAssistantResult {
+  const resumeLines = resumeText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const name = resumeLines[0] || "Your Name";
   const email = resumeText.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] || "";
   const phone = resumeText.match(/(\+?\d[\d\s().-]{7,}\d)/)?.[0] || "";
   const jobTerms =
@@ -85,23 +133,33 @@ function fallbackFromText(resumeText: string, jobDescription = ""): ResumeAssist
           end: "",
           bullets: toLines(resumeText, 3).join("\n")
         }
-      ]
+      ],
+      education: parseEducation(resumeText)
     }
   };
 }
 
-function normalizeResume(value: Partial<ResumeData>): ResumeData {
+function normalizeResume(value: Partial<ResumeData>, resumeText = ""): ResumeData {
+  const education = Array.isArray(value.education) ? value.education : [];
+  const parsedEducation = parseEducation(resumeText);
+
   return {
     ...emptyResume,
     ...value,
     links: Array.isArray(value.links) ? value.links : [],
-    experience: Array.isArray(value.experience) ? value.experience : [],
-    projects: Array.isArray(value.projects) ? value.projects : [],
-    education: Array.isArray(value.education) ? value.education : []
+    experience: Array.isArray(value.experience)
+      ? value.experience.map((item) => ({ ...item, bullets: normalizeBullets(item.bullets || "") }))
+      : [],
+    projects: Array.isArray(value.projects)
+      ? value.projects.map((item) => ({ ...item, bullets: normalizeBullets(item.bullets || "") }))
+      : [],
+    education: education.some((item) => item.school || item.degree || item.year || item.score)
+      ? education
+      : parsedEducation
   };
 }
 
-async function generate(prompt: string): Promise<ResumeAssistantResult> {
+async function generate(prompt: string, resumeText = ""): Promise<ResumeAssistantResult> {
   if (!ai) {
     throw new Error("AI is not configured");
   }
@@ -117,7 +175,7 @@ async function generate(prompt: string): Promise<ResumeAssistantResult> {
 
   return {
     mode: "ai",
-    resume: normalizeResume(parsed.resume || {}),
+    resume: normalizeResume(parsed.resume || {}, resumeText),
     suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : []
   };
 }
@@ -134,6 +192,8 @@ Rules:
 3. Use the job description to tailor wording and skills, but only where supported by the resume text.
 4. Use concise, achievement-focused bullets.
 5. Keep formatting ATS-friendly: standard sections, no tables, no icons, no rating bars.
+6. Education is required when present in the uploaded resume. Extract degree, school, year, and score/CGPA/percentage.
+7. Do not include bullet marker characters inside bullet text. Use newline-separated bullet strings only.
 
 Return exactly this JSON shape:
 {
@@ -162,7 +222,7 @@ ${resumeText}
 `;
 
   try {
-    return await generate(prompt);
+    return await generate(prompt, resumeText);
   } catch (error) {
     console.error("Resume tailoring failed:", error);
     return fallbackFromText(resumeText, jobDescription);
@@ -185,6 +245,7 @@ Rules:
 3. Do not invent companies, dates, degrees, certifications, metrics, or contact details.
 4. Improve language, clarity, ATS keyword alignment, and bullet impact.
 5. Keep the same JSON shape and keep bullets separated by newline characters.
+6. Do not include bullet marker characters inside bullet text.
 
 Return exactly this JSON shape:
 {

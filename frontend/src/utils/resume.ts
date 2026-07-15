@@ -47,8 +47,26 @@ export const emptyResume: ResumeData = {
 export function lines(value: string) {
   return value
     .split("\n")
-    .map((line) => line.trim())
+    .map((line) => line.trim().replace(/^([•*-]|\d+[.)])\s*/, "").trim())
     .filter(Boolean);
+}
+
+export function hasText(...values: Array<string | undefined>) {
+  return values.some((value) => Boolean(value?.trim()));
+}
+
+export function visibleExperience(resume: ResumeData) {
+  return resume.experience.filter((item) =>
+    hasText(item.company, item.role, item.location, item.start, item.end, item.bullets)
+  );
+}
+
+export function visibleProjects(resume: ResumeData) {
+  return resume.projects.filter((item) => hasText(item.name, item.tech, item.bullets));
+}
+
+export function visibleEducation(resume: ResumeData) {
+  return resume.education.filter((item) => hasText(item.school, item.degree, item.year, item.score));
 }
 
 export function formatResumeLinks(links: ResumeData["links"]) {
@@ -91,20 +109,20 @@ export function resumeToPlainText(resume: ResumeData) {
     resume.skills,
     "",
     "EXPERIENCE",
-    ...resume.experience.flatMap((item) => [
+    ...visibleExperience(resume).flatMap((item) => [
       `${item.role}, ${item.company}`,
       [item.location, [item.start, item.end].filter(Boolean).join(" - ")].filter(Boolean).join(" | "),
       ...lines(item.bullets).map((line) => `- ${line}`),
       ""
     ]),
     "PROJECTS",
-    ...resume.projects.flatMap((item) => [
+    ...visibleProjects(resume).flatMap((item) => [
       `${item.name}${item.tech ? ` | ${item.tech}` : ""}`,
       ...lines(item.bullets).map((line) => `- ${line}`),
       ""
     ]),
     "EDUCATION",
-    ...resume.education.flatMap((item) => [
+    ...visibleEducation(resume).flatMap((item) => [
       `${item.degree}, ${item.school}`,
       [item.year, item.score].filter(Boolean).join(" | "),
       ""
@@ -135,21 +153,78 @@ function escapeHtml(value: string) {
 }
 
 export function resumeToWordHtml(resume: ResumeData) {
-  const text = resumeToPlainText(resume);
+  const contact = [
+    resume.email,
+    resume.phone,
+    resume.location,
+    ...formatResumeLinks(resume.links)
+  ].filter(Boolean);
+  const renderBullets = (value: string) =>
+    lines(value)
+      .map((line) => `<li>${escapeHtml(line)}</li>`)
+      .join("");
+
   return `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   <style>
-    body { font-family: Arial, sans-serif; color: #172026; font-size: 11pt; line-height: 1.35; }
-    h1 { font-size: 22pt; margin: 0 0 4pt; }
-    h2 { font-size: 12pt; margin: 14pt 0 4pt; border-bottom: 1pt solid #172026; text-transform: uppercase; }
-    p { margin: 0 0 6pt; }
-    pre { white-space: pre-wrap; font-family: Arial, sans-serif; }
+    body { font-family: Arial, sans-serif; color: #172026; font-size: 10.5pt; line-height: 1.35; margin: 36pt; }
+    h1 { font-size: 22pt; margin: 0 0 3pt; }
+    .headline { font-weight: 700; margin: 0 0 5pt; }
+    .contact { color: #4d5b63; font-size: 9pt; margin: 0 0 12pt; }
+    h2 { font-size: 11pt; margin: 10pt 0 5pt; padding-bottom: 2pt; border-bottom: 1pt solid #172026; text-transform: uppercase; }
+    p { margin: 0 0 5pt; }
+    .row { margin: 0 0 7pt; }
+    .row-top { display: flex; justify-content: space-between; gap: 10pt; }
+    .muted { color: #4d5b63; }
+    ul { margin: 3pt 0 0 16pt; padding: 0; }
+    li { margin: 0 0 2pt; }
   </style>
 </head>
 <body>
-  <pre>${escapeHtml(text)}</pre>
+  <h1>${escapeHtml(resume.fullName)}</h1>
+  <p class="headline">${escapeHtml(resume.headline)}</p>
+  <p class="contact">${escapeHtml(contact.join(" | "))}</p>
+
+  <h2>Summary</h2>
+  <p>${escapeHtml(resume.summary)}</p>
+
+  <h2>Skills</h2>
+  <p>${escapeHtml(resume.skills)}</p>
+
+  <h2>Experience</h2>
+  ${visibleExperience(resume)
+    .map(
+      (item) => `<div class="row">
+        <div class="row-top"><strong>${escapeHtml([item.role, item.company].filter(Boolean).join(", "))}</strong><span class="muted">${escapeHtml([item.start, item.end].filter(Boolean).join(" - "))}</span></div>
+        ${item.location ? `<p class="muted">${escapeHtml(item.location)}</p>` : ""}
+        ${lines(item.bullets).length ? `<ul>${renderBullets(item.bullets)}</ul>` : ""}
+      </div>`
+    )
+    .join("")}
+
+  <h2>Projects</h2>
+  ${visibleProjects(resume)
+    .map(
+      (item) => `<div class="row">
+        <strong>${escapeHtml(`${item.name}${item.tech ? ` | ${item.tech}` : ""}`)}</strong>
+        ${lines(item.bullets).length ? `<ul>${renderBullets(item.bullets)}</ul>` : ""}
+      </div>`
+    )
+    .join("")}
+
+  <h2>Education</h2>
+  ${visibleEducation(resume)
+    .map(
+      (item) => `<div class="row row-top">
+        <span><strong>${escapeHtml(item.degree)}</strong>${item.school ? `, ${escapeHtml(item.school)}` : ""}</span>
+        <span class="muted">${escapeHtml([item.year, item.score].filter(Boolean).join(" | "))}</span>
+      </div>`
+    )
+    .join("")}
+
+  ${resume.certifications ? `<h2>Certifications</h2><p>${escapeHtml(resume.certifications)}</p>` : ""}
 </body>
 </html>`;
 }

@@ -10,7 +10,10 @@ import {
   lines,
   resumeToPlainText,
   resumeToWordHtml,
-  safeFileName
+  safeFileName,
+  visibleEducation,
+  visibleExperience,
+  visibleProjects
 } from "../utils/resume";
 import ResumePdf, { type ResumeTemplate } from "./ResumePdf";
 
@@ -690,7 +693,7 @@ function ResumePreview({
         <p>{resume.skills}</p>
       </PreviewSection>
       <PreviewSection title="Experience">
-        {resume.experience.map((item, index) => (
+        {visibleExperience(resume).map((item, index) => (
           <div className="mb-4 last:mb-0" key={`${item.company}-${item.role}-${index}`}>
             <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
               <p className="font-bold">{item.role}, {item.company}</p>
@@ -704,7 +707,7 @@ function ResumePreview({
         ))}
       </PreviewSection>
       <PreviewSection title="Projects">
-        {resume.projects.map((item, index) => (
+        {visibleProjects(resume).map((item, index) => (
           <div className="mb-4 last:mb-0" key={`${item.name}-${index}`}>
             <p className="font-bold">{item.name} {item.tech ? `| ${item.tech}` : ""}</p>
             <ul className="mt-1 ml-4 list-disc space-y-1">
@@ -714,7 +717,7 @@ function ResumePreview({
         ))}
       </PreviewSection>
       <PreviewSection title="Education">
-        {resume.education.map((item, index) => (
+        {visibleEducation(resume).map((item, index) => (
           <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between" key={`${item.school}-${item.degree}-${index}`}>
             <p><strong>{item.degree}</strong>, {item.school}</p>
             <p className="text-xs text-muted">{[item.year, item.score].filter(Boolean).join(" | ")}</p>
