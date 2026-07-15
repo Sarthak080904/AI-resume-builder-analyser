@@ -7,6 +7,7 @@ import { connectDatabase } from "./config/db.js";
 import { env } from "./config/env.js";
 
 import analyzeRoutes from "./routes/analyzeRoutes.js";
+import builderRoutes from "./routes/builderRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 
 import { errorHandler } from "./utils/errors.js";
@@ -45,6 +46,7 @@ mongodb: Boolean(env.mongodbUri)
 });
 
 app.use("/api/analyze", analyzeRoutes);
+app.use("/api/builder", builderRoutes);
 app.use("/api/resumes", resumeRoutes);
 
 app.use(errorHandler);

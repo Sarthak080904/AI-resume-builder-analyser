@@ -9,6 +9,29 @@ apiKey: env.geminiApiKey,
 })
 : null;
 
+function normalizeAnalysis(result: Partial<AnalysisResult>, fallback: AnalysisResult): AnalysisResult {
+return {
+...fallback,
+...result,
+strengths: Array.isArray(result.strengths) ? result.strengths : fallback.strengths,
+gaps: Array.isArray(result.gaps) ? result.gaps : fallback.gaps,
+missingKeywords: Array.isArray(result.missingKeywords) ? result.missingKeywords : fallback.missingKeywords,
+matchedKeywords: Array.isArray(result.matchedKeywords) ? result.matchedKeywords : fallback.matchedKeywords,
+improvementPlan: Array.isArray(result.improvementPlan) ? result.improvementPlan : fallback.improvementPlan,
+bulletRewrites: Array.isArray(result.bulletRewrites) ? result.bulletRewrites : fallback.bulletRewrites,
+atsWarnings: Array.isArray(result.atsWarnings) ? result.atsWarnings : fallback.atsWarnings,
+recommendedSkills: Array.isArray(result.recommendedSkills) ? result.recommendedSkills : fallback.recommendedSkills,
+sectionScores: result.sectionScores && typeof result.sectionScores === "object" ? result.sectionScores : fallback.sectionScores,
+bulletDiagnostics: Array.isArray(result.bulletDiagnostics) ? result.bulletDiagnostics : fallback.bulletDiagnostics,
+applyReadyChecklist: Array.isArray(result.applyReadyChecklist) ? result.applyReadyChecklist : fallback.applyReadyChecklist,
+topFiveActions: Array.isArray(result.topFiveActions) ? result.topFiveActions : fallback.topFiveActions,
+keywordCoverage: result.keywordCoverage && typeof result.keywordCoverage === "object" ? result.keywordCoverage : fallback.keywordCoverage,
+keywordRecommendations: Array.isArray(result.keywordRecommendations)
+? result.keywordRecommendations
+: fallback.keywordRecommendations
+};
+}
+
 export async function analyzeResume(
 resumeText: string,
 jobDescription: string
@@ -21,6 +44,7 @@ mode: "heuristic",
 };
 }
 
+const fallback = heuristicAnalyze(resumeText, jobDescription);
 
 const prompt = `
 
@@ -40,7 +64,9 @@ IMPORTANT RULES:
 8. Do NOT use trailing commas.
 9. Output must start with { and end with }.
 10. Every array item must be a plain string.
-11. If information is unavailable, return an empty array [] or empty string "".
+11. Except matchedKeywords, bulletDiagnostics, applyReadyChecklist, keywordCoverage, keywordRecommendations, and sectionScores, every array item must be a plain string.
+12. If information is unavailable, return an empty array [] or empty string "".
+13. Do not invent experience, employers, certifications, dates, metrics, or tools.
 
 Return EXACTLY this structure:
 
@@ -60,11 +86,24 @@ Return EXACTLY this structure:
 "bulletRewrites": [],
 "atsWarnings": [],
 "recommendedSkills": [],
-"sectionScores": {},
-"bulletDiagnostics": [],
-"applyReadyChecklist": [],
+"sectionScores": { "summary": 0, "skills": 0, "experience": 0, "projects": 0, "education": 0 },
+"bulletDiagnostics": [{ "original": "", "issue": "", "rewrite": "" }],
+"applyReadyChecklist": [{ "label": "", "passed": true, "guidance": "" }],
 "topFiveActions": [],
-"keywordCoverage": {}
+"keywordCoverage": {
+  "technical": { "matched": 0, "total": 0 },
+  "soft": { "matched": 0, "total": 0 },
+  "domain": { "matched": 0, "total": 0 },
+  "tools": { "matched": 0, "total": 0 },
+  "certification": { "matched": 0, "total": 0 }
+},
+"keywordRecommendations": [{
+  "keyword": "",
+  "category": "technical",
+  "priority": "high",
+  "suggestedSection": "experience",
+  "guidance": ""
+}]
 }
 
 JOB DESCRIPTION:
@@ -101,7 +140,7 @@ try {
   const result = JSON.parse(jsonMatch[0]);
 
   return {
-    ...(result as AnalysisResult),
+    ...normalizeAnalysis(result as Partial<AnalysisResult>, fallback),
     mode: "ai",
   };
 } catch (parseError) {

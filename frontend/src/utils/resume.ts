@@ -62,3 +62,94 @@ export function formatResumeLinks(links: ResumeData["links"]) {
     })
     .filter(Boolean);
 }
+
+export function safeFileName(value: string, fallback = "resume") {
+  return (value || fallback)
+    .trim()
+    .replace(/[^a-z0-9]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase() || fallback;
+}
+
+export function resumeToPlainText(resume: ResumeData) {
+  const contact = [
+    resume.email,
+    resume.phone,
+    resume.location,
+    ...formatResumeLinks(resume.links)
+  ].filter(Boolean);
+
+  const blocks = [
+    resume.fullName,
+    resume.headline,
+    contact.join(" | "),
+    "",
+    "SUMMARY",
+    resume.summary,
+    "",
+    "SKILLS",
+    resume.skills,
+    "",
+    "EXPERIENCE",
+    ...resume.experience.flatMap((item) => [
+      `${item.role}, ${item.company}`,
+      [item.location, [item.start, item.end].filter(Boolean).join(" - ")].filter(Boolean).join(" | "),
+      ...lines(item.bullets).map((line) => `- ${line}`),
+      ""
+    ]),
+    "PROJECTS",
+    ...resume.projects.flatMap((item) => [
+      `${item.name}${item.tech ? ` | ${item.tech}` : ""}`,
+      ...lines(item.bullets).map((line) => `- ${line}`),
+      ""
+    ]),
+    "EDUCATION",
+    ...resume.education.flatMap((item) => [
+      `${item.degree}, ${item.school}`,
+      [item.year, item.score].filter(Boolean).join(" | "),
+      ""
+    ]),
+    resume.certifications ? "CERTIFICATIONS" : "",
+    resume.certifications
+  ];
+
+  return blocks.filter((block) => block !== undefined).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+export function downloadTextFile(fileName: string, content: string, type = "text/plain;charset=utf-8") {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+export function resumeToWordHtml(resume: ResumeData) {
+  const text = resumeToPlainText(resume);
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    body { font-family: Arial, sans-serif; color: #172026; font-size: 11pt; line-height: 1.35; }
+    h1 { font-size: 22pt; margin: 0 0 4pt; }
+    h2 { font-size: 12pt; margin: 14pt 0 4pt; border-bottom: 1pt solid #172026; text-transform: uppercase; }
+    p { margin: 0 0 6pt; }
+    pre { white-space: pre-wrap; font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <pre>${escapeHtml(text)}</pre>
+</body>
+</html>`;
+}

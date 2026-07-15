@@ -1,10 +1,10 @@
 import { Brain, FileCheck2, PencilRuler } from "lucide-react";
 import { useState } from "react";
-import { analyzeResume } from "./api";
+import { analyzeResume, tailorResume } from "./api";
 import AnalysisPanel from "./components/AnalysisPanel";
 import AnalyzerForm from "./components/AnalyzerForm";
 import ResumeBuilder from "./components/ResumeBuilder";
-import type { AnalysisResult } from "./types";
+import type { AnalysisResult, ResumeData } from "./types";
 
 const sampleJob =
   "We are hiring a Full Stack Developer with strong React, TypeScript, Node.js, Express, MongoDB, REST API design, Git, testing, and cloud deployment experience. The ideal candidate can build responsive interfaces, design scalable backend services, collaborate with stakeholders, optimize performance, and communicate clearly in an agile team.";
@@ -13,8 +13,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"analyze" | "build">("analyze");
   const [file, setFile] = useState<File | null>(null);
   const [jobDescription, setJobDescription] = useState(sampleJob);
+  const [storeAnalysis, setStoreAnalysis] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [builderDraft, setBuilderDraft] = useState<ResumeData | null>(null);
+  const [builderNotice, setBuilderNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [tailoring, setTailoring] = useState(false);
   const [error, setError] = useState("");
 
   const submitAnalysis = async () => {
@@ -30,7 +34,7 @@ export default function App() {
     setError("");
     setLoading(true);
     try {
-      const response = await analyzeResume(file, jobDescription);
+      const response = await analyzeResume(file, jobDescription, storeAnalysis);
       setAnalysis(response.result);
     } catch (requestError) {
       const message =
@@ -45,6 +49,43 @@ export default function App() {
       setError(message || "Analysis failed. Check the backend server and try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const createTailoredDraft = async () => {
+    if (!file) {
+      setError("Please upload a resume file before creating a tailored draft.");
+      return;
+    }
+    if (jobDescription.trim().length < 80) {
+      setError("Paste a more complete job description.");
+      return;
+    }
+
+    setError("");
+    setTailoring(true);
+    try {
+      const response = await tailorResume(file, jobDescription);
+      setBuilderDraft(response.resume);
+      setBuilderNotice(
+        response.mode === "ai"
+          ? "AI tailored draft created. Review every field before exporting."
+          : "Draft created with heuristic fallback. Review every field before exporting."
+      );
+      setActiveTab("build");
+    } catch (requestError) {
+      const message =
+        typeof requestError === "object" &&
+        requestError !== null &&
+        "response" in requestError &&
+        typeof requestError.response === "object" &&
+        requestError.response !== null &&
+        "data" in requestError.response
+          ? (requestError.response as { data?: { message?: string } }).data?.message
+          : "";
+      setError(message || "Could not create a tailored draft. Try again.");
+    } finally {
+      setTailoring(false);
     }
   };
 
@@ -94,14 +135,34 @@ export default function App() {
           jobDescription={jobDescription}
           loading={loading}
           error={error}
+          storeAnalysis={storeAnalysis}
           onFileChange={setFile}
           onJobDescriptionChange={setJobDescription}
+          onStoreAnalysisChange={setStoreAnalysis}
           onSubmit={submitAnalysis}
         />
         <AnalysisPanel result={analysis} loading={loading} />
+        <div className="xl:col-start-2">
+          {analysis ? (
+            <button
+              type="button"
+              disabled={tailoring}
+              onClick={createTailoredDraft}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-3 text-sm font-bold text-white hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <PencilRuler className="h-4 w-4" />
+              {tailoring ? "Creating tailored builder draft..." : "Create Tailored Resume in Builder"}
+            </button>
+          ) : null}
+        </div>
       </div>
     ) : (
-      <ResumeBuilder />
+      <ResumeBuilder
+        initialResume={builderDraft}
+        jobDescription={jobDescription}
+        notice={builderNotice}
+        onNoticeClear={() => setBuilderNotice("")}
+      />
     )}
   </div>
 

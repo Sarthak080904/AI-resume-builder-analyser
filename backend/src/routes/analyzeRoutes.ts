@@ -14,7 +14,11 @@ const upload = multer({
 });
 
 const bodySchema = z.object({
-  jobDescription: z.string().min(80, "Paste a job description with at least 80 characters.")
+  jobDescription: z.string().min(80, "Paste a job description with at least 80 characters."),
+  storeAnalysis: z
+    .string()
+    .optional()
+    .transform((value) => value === "true")
 });
 
 router.post("/", upload.single("resume"), async (req, res, next) => {
@@ -23,11 +27,11 @@ router.post("/", upload.single("resume"), async (req, res, next) => {
       throw new HttpError(400, "Resume file is required.");
     }
 
-    const { jobDescription } = bodySchema.parse(req.body);
+    const { jobDescription, storeAnalysis } = bodySchema.parse(req.body);
     const resumeText = await parseResumeFile(req.file);
     const result = await analyzeResume(resumeText, jobDescription);
 
-    if (mongoose.connection.readyState === 1) {
+    if (storeAnalysis && mongoose.connection.readyState === 1) {
       await AnalysisModel.create({
         fileName: req.file.originalname,
         jobDescription,
