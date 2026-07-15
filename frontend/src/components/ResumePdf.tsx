@@ -13,16 +13,23 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontFamily: "Helvetica-Bold",
+    lineHeight: 1.15,
     marginBottom: 3
   },
   headline: {
     fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    lineHeight: 1.25,
     marginBottom: 5
   },
   contact: {
     fontSize: 9,
     color: "#4d5b63",
+    lineHeight: 1.35,
     marginBottom: 12
+  },
+  paragraph: {
+    lineHeight: 1.35
   },
   section: {
     marginTop: 10
@@ -30,6 +37,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
+    lineHeight: 1.2,
     borderBottomWidth: 1,
     borderBottomColor: "#172026",
     paddingBottom: 2,
@@ -43,6 +51,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 10
+  },
+  rowTitle: {
+    flex: 1,
+    paddingRight: 8
+  },
+  rowDate: {
+    minWidth: 80,
+    textAlign: "right"
   },
   bold: {
     fontFamily: "Helvetica-Bold"
@@ -58,7 +74,8 @@ const styles = StyleSheet.create({
     width: 10
   },
   bulletText: {
-    flex: 1
+    flex: 1,
+    lineHeight: 1.35
   }
 });
 
@@ -92,12 +109,12 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Summary</Text>
-          <Text>{resume.summary}</Text>
+          <Text style={styles.paragraph}>{resume.summary}</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Skills</Text>
-          <Text>{resume.skills}</Text>
+          <Text style={styles.paragraph}>{resume.skills}</Text>
         </View>
 
         <View style={styles.section}>
@@ -105,10 +122,10 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
           {resume.experience.map((item) => (
             <View style={styles.row} key={`${item.company}-${item.role}`}>
               <View style={styles.rowTop}>
-                <Text style={styles.bold}>
+                <Text style={[styles.bold, styles.rowTitle]}>
                   {item.role}, {item.company}
                 </Text>
-                <Text style={styles.muted}>
+                <Text style={[styles.muted, styles.rowDate]}>
                   {item.start} - {item.end}
                 </Text>
               </View>
@@ -134,10 +151,10 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
           <Text style={styles.sectionTitle}>Education</Text>
           {resume.education.map((item) => (
             <View style={styles.rowTop} key={`${item.school}-${item.degree}`}>
-              <Text>
+              <Text style={styles.rowTitle}>
                 <Text style={styles.bold}>{item.degree}</Text>, {item.school}
               </Text>
-              <Text style={styles.muted}>{[item.year, item.score].filter(Boolean).join(" | ")}</Text>
+              <Text style={[styles.muted, styles.rowDate]}>{[item.year, item.score].filter(Boolean).join(" | ")}</Text>
             </View>
           ))}
         </View>
@@ -145,7 +162,7 @@ export default function ResumePdf({ resume }: { resume: ResumeData }) {
         {resume.certifications ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Certifications</Text>
-            <Text>{resume.certifications}</Text>
+            <Text style={styles.paragraph}>{resume.certifications}</Text>
           </View>
         ) : null}
       </Page>
